@@ -1,6 +1,7 @@
 package com.moveinsync.zones.api;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(properties = "app.storage.journal-path=")
 @AutoConfigureMockMvc
+@AutoConfigureObservability // Spring Boot turns metrics export off in tests unless asked
 class SecurityAndTenantIsolationTest extends ApiTestSupport {
 
     @Test
