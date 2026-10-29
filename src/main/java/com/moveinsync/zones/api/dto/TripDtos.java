@@ -1,5 +1,6 @@
 package com.moveinsync.zones.api.dto;
 
+import com.moveinsync.zones.api.dto.QueryDtos.PingDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,6 @@ public final class TripDtos {
                               Instant startedAt) {
     }
 
-    public record PingBatch(@NotNull @Size(min = 1, max = 5_000) List<@Valid @NotNull QueryDtos.PingDto> pings) {
+    public record PingBatch(@NotNull @Size(min = 1, max = 5_000) List<@Valid @NotNull PingDto> pings) {
     }
 }
