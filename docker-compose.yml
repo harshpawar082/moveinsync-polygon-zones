@@ -1,0 +1,21 @@
+services:
+  zones:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: "compose-demo-secret-change-me-32-bytes-or-more"
+    volumes:
+      - zones-data:/app/data      # the zone journal survives restarts and crashes
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - zones
+
+volumes:
+  zones-data:

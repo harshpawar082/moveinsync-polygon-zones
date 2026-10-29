@@ -1,0 +1,7 @@
+{
+ "tripId": "NIGHT-001",
+ "cabId": "KA01AB1234",
+ "riderIds": [
+  "employee-acme"
+ ]
+}

@@ -1,0 +1,34 @@
+{
+ "expectedVersion": 1,
+ "name": "Quarry road (no entry at night)",
+ "type": "NO_GO",
+ "priority": 0,
+ "reason": "road reopened on the west side",
+ "geometry": {
+  "type": "Polygon",
+  "coordinates": [
+   [
+    [
+     77.66,
+     13.02
+    ],
+    [
+     77.68,
+     13.02
+    ],
+    [
+     77.68,
+     13.06
+    ],
+    [
+     77.66,
+     13.06
+    ],
+    [
+     77.66,
+     13.02
+    ]
+   ]
+  ]
+ }
+}

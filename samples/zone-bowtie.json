@@ -1,0 +1,33 @@
+{
+ "zoneId": "BOWTIE",
+ "name": "Self-intersecting",
+ "type": "TARIFF",
+ "priority": 1,
+ "geometry": {
+  "type": "Polygon",
+  "coordinates": [
+   [
+    [
+     77.0,
+     12.0
+    ],
+    [
+     77.1,
+     12.1
+    ],
+    [
+     77.1,
+     12.0
+    ],
+    [
+     77.0,
+     12.1
+    ],
+    [
+     77.0,
+     12.0
+    ]
+   ]
+  ]
+ }
+}
