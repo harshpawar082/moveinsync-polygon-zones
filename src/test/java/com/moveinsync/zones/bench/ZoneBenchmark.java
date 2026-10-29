@@ -148,7 +148,7 @@ public final class ZoneBenchmark {
         System.out.printf("| latency p50 / p99 / p99.9 | %.1f / %.1f / %.1f us |%n", lat[lat.length / 2] / 1000.0,
                 lat[(int) (lat.length * 0.99)] / 1000.0, lat[(int) (lat.length * 0.999)] / 1000.0);
         System.out.printf("| brute force (test every bbox) | %,.0f queries/s (%.0fx slower) |%n", bruteQps, singleQps / bruteQps);
-        System.out.printf("| target | 50,000 pings/s -> %.0fx headroom on one thread |%n%n", singleQps / 50_000);
+        System.out.printf("| target | 50,000 pings/s -> %.1fx headroom on one thread |%n%n", singleQps / 50_000);
 
         // 6. latency while the index is rebuilt live
         rebuildUnderLoad(zones, points);
@@ -212,10 +212,10 @@ public final class ZoneBenchmark {
         manager.close();
     }
 
-    /** 2 reader threads; runs for durationMs or until the flag goes false. */
+    /** CPUs-1 reader threads (one core left for the rebuild); runs for durationMs or until the flag goes false. */
     private static long[] readerLatencies(SnapshotManager manager, double[][] points, long durationMs, AtomicBoolean flag)
             throws InterruptedException {
-        int readers = 2;
+        int readers = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
         List<long[]> results = new ArrayList<>();
         List<int[]> counts = new ArrayList<>();
         List<Thread> ts = new ArrayList<>();
@@ -316,40 +316,50 @@ public final class ZoneBenchmark {
         return total.get() / ((System.nanoTime() - start) / 1e9);
     }
 
-    /** Star-shaped polygons (valid by construction) of realistic, mixed sizes. */
+    /**
+     * Realistic zones: wavy, non-convex outlines with short edges (like boundaries
+     * drawn on a map), mixed sizes: 85% small (150-800 m), 13% medium (0.8-2 km),
+     * 2% large (2-5 km, 1,024-4,096 vertices); 20% have a hole.
+     * Star-shaped around the centre with radius > 0, so valid by construction.
+     */
     static List<List<double[]>> randomZone(Random rnd) {
         double cx = MIN_LNG + rnd.nextDouble() * SPAN;
         double cy = MIN_LAT + rnd.nextDouble() * SPAN;
         double u = rnd.nextDouble();
         double r;
         int n;
-        if (u < 0.70) {
-            r = 0.002 + rnd.nextDouble() * 0.008;
+        if (u < 0.85) {
+            r = 0.0014 + rnd.nextDouble() * 0.0058;
             n = 16 + rnd.nextInt(112);
-        } else if (u < 0.95) {
-            r = 0.01 + rnd.nextDouble() * 0.02;
+        } else if (u < 0.98) {
+            r = 0.0072 + rnd.nextDouble() * 0.011;
             n = 128 + rnd.nextInt(896);
         } else {
-            r = 0.03 + rnd.nextDouble() * 0.05;
+            r = 0.018 + rnd.nextDouble() * 0.027;
             n = 1024 + rnd.nextInt(3072);
         }
-        boolean hole = rnd.nextDouble() < 0.2;
         List<List<double[]>> rings = new ArrayList<>();
-        rings.add(starRing(rnd, cx, cy, r, n, false));
-        if (hole) {
-            rings.add(starRing(rnd, cx, cy, r * 0.3, Math.max(8, n / 8), true));
+        rings.add(wavyRing(rnd, cx, cy, r, n, false));
+        if (rnd.nextDouble() < 0.2) {
+            rings.add(wavyRing(rnd, cx, cy, r * 0.3, Math.max(8, n / 8), true));
         }
         return rings;
     }
 
-    private static List<double[]> starRing(Random rnd, double cx, double cy, double r, int n, boolean clockwise) {
+    private static List<double[]> wavyRing(Random rnd, double cx, double cy, double r, int n, boolean clockwise) {
+        int k1 = 2 + rnd.nextInt(5);
+        int k2 = 7 + rnd.nextInt(9);
+        double p1 = rnd.nextDouble() * 2 * Math.PI;
+        double p2 = rnd.nextDouble() * 2 * Math.PI;
         List<double[]> pts = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             double a = 2 * Math.PI * i / n;
             if (clockwise) {
                 a = -a;
             }
-            double radius = r * (0.6 + 0.4 * rnd.nextDouble());
+            // radius between 0.5r and 1.0r: concave dents, but never through the centre
+            double radius = r * (0.75 + 0.15 * Math.sin(k1 * a + p1) + 0.08 * Math.sin(k2 * a + p2)
+                    + 0.02 * (rnd.nextDouble() - 0.5));
             pts.add(new double[]{cx + radius * Math.cos(a), cy + radius * Math.sin(a)});
         }
         pts.add(pts.get(0));
