@@ -29,8 +29,12 @@ curl -s -X POST "$BASE/api/v1/zones" -H "Authorization: Bearer $ADMIN" \
 step "4. Live night trip through the quarry no-go zone (with a duplicate and a late ping)"
 curl -s -X POST "$BASE/api/v1/trips" -H "Authorization: Bearer $OPER" \
   -H 'Content-Type: application/json' --data @samples/start-night-trip.json; echo
+echo "-- 21 pings + 1 exact duplicate (expect duplicates:1, a NO_GO_ALERT)"
 curl -s -X POST "$BASE/api/v1/trips/NIGHT-001/pings" -H "Authorization: Bearer $OPER" \
   -H 'Content-Type: application/json' --data @samples/night-trip-pings.json; echo
+echo "-- a ping from 23:01 arriving after the 23:10 ones (expect outOfOrder:1, kilometres unchanged)"
+curl -s -X POST "$BASE/api/v1/trips/NIGHT-001/pings" -H "Authorization: Bearer $OPER" \
+  -H 'Content-Type: application/json' --data @samples/night-trip-late-ping.json; echo
 curl -s -X POST "$BASE/api/v1/trips/NIGHT-001/end" -H "Authorization: Bearer $OPER"; echo
 
 step "5. The rider can read their own trip; tenant globex cannot see it"
