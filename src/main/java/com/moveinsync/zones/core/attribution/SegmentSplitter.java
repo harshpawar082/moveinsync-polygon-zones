@@ -68,7 +68,7 @@ public final class SegmentSplitter {
                 if (!ring.bbox().intersects(box)) {
                     continue;
                 }
-                addCrossings(a, b, box, ring, ts);
+                ring.collectCrossings(a.x(), a.y(), b.x(), b.y(), box, ts);
             }
         }
         ts.sort();
@@ -102,22 +102,6 @@ public final class SegmentSplitter {
             pieces.add(new Piece(0.0, 1.0, List.of()));
         }
         return pieces;
-    }
-
-    private static void addCrossings(GeoPoint a, GeoPoint b, BoundingBox box, Ring ring, DoubleList out) {
-        int n = ring.size();
-        for (int i = 0; i < n; i++) {
-            int j = (i + 1) % n;
-            double ex0 = ring.x(i);
-            double ey0 = ring.y(i);
-            double ex1 = ring.x(j);
-            double ey1 = ring.y(j);
-            if (Math.max(ex0, ex1) < box.minX() || Math.min(ex0, ex1) > box.maxX()
-                    || Math.max(ey0, ey1) < box.minY() || Math.min(ey0, ey1) > box.maxY()) {
-                continue;
-            }
-            GeometryMath.intersectionParams(a.x(), a.y(), b.x(), b.y(), ex0, ey0, ex1, ey1, out);
-        }
     }
 
     /** Joins neighbouring pieces that are inside the same zones. */

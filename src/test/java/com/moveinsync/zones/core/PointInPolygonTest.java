@@ -84,6 +84,59 @@ class PointInPolygonTest {
     }
 
     @Test
+    void bandIndexGivesTheSameAnswerAsTestingEveryEdge() {
+        java.util.Random rnd = new java.util.Random(9);
+        for (int shape = 0; shape < 20; shape++) {
+            java.util.List<java.util.List<double[]>> coords = TestShapes.star(rnd, 77.6, 12.97, 0.05, 40 + rnd.nextInt(4000), true);
+            Polygon p = TestShapes.VALIDATOR.validate(coords);
+            for (int i = 0; i < 5000; i++) {
+                double x = 77.54 + rnd.nextDouble() * 0.12;
+                double y = 12.91 + rnd.nextDouble() * 0.12;
+                if (i % 50 == 0) { // exactly on a vertex
+                    double[] v = coords.get(0).get(rnd.nextInt(coords.get(0).size()));
+                    x = v[0];
+                    y = v[1];
+                }
+                assertEquals(naive(coords, x, y), p.locate(x, y), "shape " + shape + " point " + x + "," + y);
+            }
+        }
+    }
+
+    /** Reference: plain O(V) test over every edge of every ring, no index. */
+    private static Location naive(java.util.List<java.util.List<double[]>> rings, double x, double y) {
+        Location outer = naiveRing(rings.get(0), x, y);
+        if (outer != Location.INSIDE) {
+            return outer;
+        }
+        for (int h = 1; h < rings.size(); h++) {
+            Location inHole = naiveRing(rings.get(h), x, y);
+            if (inHole == Location.BOUNDARY) {
+                return Location.BOUNDARY;
+            }
+            if (inHole == Location.INSIDE) {
+                return Location.OUTSIDE;
+            }
+        }
+        return Location.INSIDE;
+    }
+
+    private static Location naiveRing(java.util.List<double[]> ring, double x, double y) {
+        boolean inside = false;
+        for (int i = 0; i + 1 < ring.size(); i++) {
+            double[] a = ring.get(i);
+            double[] b = ring.get(i + 1);
+            if (com.moveinsync.zones.core.geo.GeometryMath.onSegment(x, y, a[0], a[1], b[0], b[1],
+                    com.moveinsync.zones.core.geo.GeometryMath.BOUNDARY_TOLERANCE_DEG)) {
+                return Location.BOUNDARY;
+            }
+            if ((a[1] > y) != (b[1] > y) && x < a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1])) {
+                inside = !inside;
+            }
+        }
+        return inside ? Location.INSIDE : Location.OUTSIDE;
+    }
+
+    @Test
     void horizontalEdgeOnTheRayLine() {
         // y = 3 is the top edge of the U arms; points on it are boundary, points beside it outside
         assertEquals(Location.BOUNDARY, uShape.locate(0.5, 3.0));
