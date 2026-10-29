@@ -1,0 +1,56 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: polygon-zones
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  structured:
+    format:
+      console: ecs        # one JSON object per log line (requestId included from the MDC)
+  level:
+    root: INFO
+
+app:
+  index:
+    cell-size-deg: 0.01           # ~1.1 km grid cells
+    max-cells-per-zone: 4096      # bigger zones go to the "oversized" list
+    history-cache-size: 32        # old snapshots kept for trips pinned to earlier versions
+    retry-base-millis: 500        # rebuild retry: 0.5 s, 1 s, 2 s ... capped at 30 s
+    retry-max-millis: 30000
+    rebuild-threads: 2
+    max-vertices-per-zone: 200000
+    max-batch: 10000
+  trips:
+    night-start: "22:00"          # no-go zones enforced 22:00-06:00 local time
+    night-end: "06:00"
+    time-zone: Asia/Kolkata
+    max-pings-per-batch: 5000
+  storage:
+    journal-path: ${ZONES_JOURNAL_PATH:./data/zones.jsonl}
+  security:
+    jwt-secret: ${JWT_SECRET:local-demo-secret-change-me-at-least-32-bytes}
+    token-ttl-minutes: 60
+    users:                        # demo accounts only
+      - { username: admin-acme,      password: admin123, tenant: acme,   role: ADMIN }
+      - { username: operator-acme,   password: oper123,  tenant: acme,   role: OPERATOR }
+      - { username: employee-acme,   password: emp123,   tenant: acme,   role: EMPLOYEE }
+      - { username: employee-acme-2, password: emp123,   tenant: acme,   role: EMPLOYEE }
+      - { username: admin-globex,    password: admin123, tenant: globex, role: ADMIN }
+      - { username: operator-globex, password: oper123,  tenant: globex, role: OPERATOR }
+  seed:
+    enabled: true
