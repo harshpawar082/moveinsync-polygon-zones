@@ -50,6 +50,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/token").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // zone writes are ADMIN-only; checked here too, so a non-admin gets 403
+                        // before the request body is even parsed or validated
+                        .requestMatchers(HttpMethod.POST, "/api/v1/zones").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/zones/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/zones/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(SecurityConfig::toAuthentication))
